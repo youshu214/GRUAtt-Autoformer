@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .bigru_attention import BiGRUAttention  # 确保正确导入
+from .bigru_attention import BiGRUAttention  
 
 class my_Layernorm(nn.Module):
     def __init__(self, channels):
@@ -46,33 +46,29 @@ class series_decomp(nn.Module):
 
 class EncoderLayer(nn.Module):
     """
-    带Attention权重保存功能的融合模型Encoder层
+    Fusion Model Encoder Layer with Attention Weights Preservation
     """
     def __init__(self, attention, d_model, d_ff=None, moving_avg=25, dropout=0.4, activation="relu"):
         super(EncoderLayer, self).__init__()
         d_ff = d_ff or 4 * d_model
         self.attention = attention
-        
-        # BiGRU模块
+
         self.bigru_att = BiGRUAttention(
             input_dim=d_model,
             hidden_dim=d_model // 2,
             num_layers=2,
             dropout=0.4
         )
-        
-        # 融合门控
+
         self.fusion_gate = nn.Sequential(
             nn.Linear(d_model * 2, d_model),
             nn.GELU(),
             nn.Linear(d_model, 1)
         )
-        
-        # 新增：Attention权重保存相关
-        self.save_attn = False  # 开关：是否保存注意力权重
-        self.attn_weights = []  # 存储注意力权重的列表
-        
-        # 其他组件
+
+        self.save_attn = False  
+        self.attn_weights = []  
+
         self.bn = nn.BatchNorm1d(d_model)
         self.dropout = nn.Dropout(dropout)
         self.conv1 = nn.Conv1d(in_channels=d_model, out_channels=d_ff, kernel_size=1, bias=False)
@@ -84,28 +80,21 @@ class EncoderLayer(nn.Module):
     def forward(self, x, attn_mask=None):
         # AutoCorrelation注意力计算
         new_x, attn = self.attention(x, x, x, attn_mask=attn_mask)
-        
-        # 新增：如果开启保存，就把当前层的注意力权重存起来
         if self.save_attn:
-            # 转为numpy并移到CPU，脱离计算图（不影响模型训练）
             self.attn_weights.append(attn.cpu().detach().numpy())
         
         x = x + self.dropout(new_x)
-        
-        # 序列分解
+
         seasonal_x, trend_x = self.decomp1(x)
-        
-        # BiGRU特征提取
+
         gru_feat = self.bigru_att(seasonal_x)
         gru_feat = gru_feat.unsqueeze(1).repeat(1, seasonal_x.shape[1], 1)
         
-        # 动态门控融合
         gate_logits = self.fusion_gate(torch.cat([seasonal_x, gru_feat], dim=-1))
         gate = torch.sigmoid(gate_logits)
         fused_seasonal = self.dropout(gate * seasonal_x + (1 - gate) * gru_feat)
         fused_seasonal = self.bn(fused_seasonal.transpose(1,2)).transpose(1,2)
         
-        # 前馈网络
         x = fused_seasonal + trend_x
         y = x
         y = self.dropout(self.activation(self.conv1(y.transpose(-1, 1))))
