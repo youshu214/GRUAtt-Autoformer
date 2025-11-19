@@ -39,10 +39,9 @@ def R2(pred, true):
 
 
 def DS(pred, true):
-    """计算方向对称性 (Directional Symmetry)"""
     N = len(true)
     if N < 2:
-        return np.nan  # 数据点不足，无法计算
+        return np.nan 
     a_t = []
     for t in range(1, N):
         y_diff = pred[t] - pred[t-1]
@@ -52,14 +51,13 @@ def DS(pred, true):
 
 
 def DP(pred, true):
-    """计算上升趋势方向精度 (Directional Precision for up trend)"""
     N = len(true)
     if N < 2:
         return np.nan
     a_t = []
     for t in range(1, N):
         d_diff = true[t] - true[t-1]
-        if d_diff > 0:  # 真实值处于上升趋势
+        if d_diff > 0:  
             y_diff = pred[t] - pred[t-1]
             a_t.append(1 if (y_diff * d_diff) >= 0 and y_diff > 0 else 0)
     N1 = len(a_t)
@@ -67,14 +65,13 @@ def DP(pred, true):
 
 
 def CD(pred, true):
-    """计算下降趋势方向精度 (Directional Precision for down trend)"""
     N = len(true)
     if N < 2:
         return np.nan
     a_t = []
     for t in range(1, N):
         d_diff = true[t] - true[t-1]
-        if d_diff < 0:  # 真实值处于下降趋势
+        if d_diff < 0:  
             y_diff = pred[t] - pred[t-1]
             a_t.append(1 if (y_diff * d_diff) >= 0 and y_diff < 0 else 0)
     N2 = len(a_t)
@@ -82,7 +79,6 @@ def CD(pred, true):
 
 
 def metric(pred, true):
-    """返回所有评估指标，包括新增的DS、DP、CD"""
     mae = MAE(pred, true)
     mse = MSE(pred, true)
     rmse = RMSE(pred, true)
