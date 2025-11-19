@@ -178,7 +178,7 @@ class Exp_Main(Exp_Basic):
         test_data, test_loader = self._get_data(flag='test')
         if test:
             print('loading model')
-            # 加载模型权重
+
             model_path = os.path.join('./checkpoints/' + setting, 'checkpoint.pth')
             self.model.load_state_dict(torch.load(model_path))
 
@@ -188,16 +188,13 @@ class Exp_Main(Exp_Basic):
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
-        # 新增：初始化Attention权重保存相关
-        # 开启所有Encoder层的Attention保存功能
-        # 适配Autoformer的模型结构：通常编码器在model.encoder，且包含layers列表
         if hasattr(self.model, 'encoder') and hasattr(self.model.encoder, 'layers'):
             for layer in self.model.encoder.layers:
                 if hasattr(layer, 'save_attn'):
-                    layer.save_attn = True  # 开启保存开关
-                    layer.attn_weights = []  # 清空历史权重
+                    layer.save_attn = True  
+                    layer.attn_weights = [] 
         else:
-            print("Warning: 模型结构中未找到编码器层，无法保存Attention权重")
+            print("Warning: Encoder layer not found in the model structure to save Attention weights")
 
         self.model.eval()
         with torch.no_grad():
@@ -224,7 +221,6 @@ class Exp_Main(Exp_Basic):
                     pd = np.concatenate((input[0, :, -1], pred[0, :, -1]), axis=0)
                     visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
 
-        # 合并预测结果
         preds = np.concatenate(preds, axis=0)
         trues = np.concatenate(trues, axis=0)
         print('test shape:', preds.shape, trues.shape)
@@ -232,24 +228,18 @@ class Exp_Main(Exp_Basic):
         trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
         print('test shape:', preds.shape, trues.shape)
 
-        # 结果保存目录
         folder_path = './results/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
-        # 新增：保存Attention权重
         if hasattr(self.model, 'encoder') and hasattr(self.model.encoder, 'layers'):
             for layer_idx, layer in enumerate(self.model.encoder.layers):
                 if hasattr(layer, 'attn_weights') and len(layer.attn_weights) > 0:
-                    # 将该层的所有Attention权重合并为numpy数组
                     attn_array = np.array(layer.attn_weights)
-                    # 保存路径：results/setting/attention_layer_0.npy
                     np.save(os.path.join(folder_path, f'attention_layer_{layer_idx}.npy'), attn_array)
-                    print(f"已保存第{layer_idx}层Attention权重，形状：{attn_array.shape}")
-                    # 关闭保存开关
+                    print(f"Attention weights for the {layer_idx}th layer have been saved, shape：{attn_array.shape}")
                     layer.save_attn = False
 
-        # 计算并保存评估指标
         mae, mse, rmse, mape, r2 = metric(preds, trues)
         print('mae:{}, mse:{}, rmse:{}, mape:{}, r2:{}'.format(mae, mse, rmse, mape, r2))
         f = open("result.txt", 'a')
