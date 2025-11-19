@@ -1,0 +1,127 @@
+{
+  "technical_indicators": {
+    "RSI_14": {
+      "function": "talib.RSI",
+      "parameters": {
+        "timeperiod": 14
+      },
+      "description": "14-day Relative Strength Index, measuring speed and magnitude of price movements",
+      "output_columns": ["RSI_14"]
+    },
+    "MACD": {
+      "function": "talib.MACD",
+      "parameters": {
+        "fastperiod": 12,
+        "slowperiod": 26,
+        "signalperiod": 9
+      },
+      "description": "Moving Average Convergence Divergence, trend-following momentum indicator",
+      "output_columns": ["MACD", "MACD_Signal", "MACD_Hist"]
+    },
+    "BBANDS": {
+      "function": "talib.BBANDS",
+      "parameters": {
+        "timeperiod": 20,
+        "nbdevup": 2,
+        "nbdevdn": 2,
+        "matype": 0
+      },
+      "description": "Bollinger Bands, 20-day moving average with upper and lower bands at 2 standard deviations",
+      "output_columns": ["Upper_BB", "Middle_BB", "Lower_BB"]
+    },
+    "SMA_50": {
+      "function": "talib.SMA",
+      "parameters": {
+        "timeperiod": 50
+      },
+      "description": "50-day Simple Moving Average",
+      "output_columns": ["SMA_50"]
+    },
+    "EMA_20": {
+      "function": "talib.EMA",
+      "parameters": {
+        "timeperiod": 20
+      },
+      "description": "20-day Exponential Moving Average",
+      "output_columns": ["EMA_20"]
+    },
+    "STOCH": {
+      "function": "talib.STOCH",
+      "parameters": {
+        "fastk_period": 14,
+        "slowk_period": 3,
+        "slowd_period": 3
+      },
+      "description": "Stochastic Oscillator, measuring closing price relative to recent price range",
+      "output_columns": ["SlowK", "SlowD"]
+    },
+    "ATR_14": {
+      "function": "talib.ATR",
+      "parameters": {
+        "timeperiod": 14
+      },
+      "description": "14-day Average True Range, measuring price volatility",
+      "output_columns": ["ATR_14"]
+    },
+    "CCI_20": {
+      "function": "talib.CCI",
+      "parameters": {
+        "timeperiod": 20
+      },
+      "description": "20-day Commodity Channel Index, measuring deviation from statistical average",
+      "output_columns": ["CCI_20"]
+    },
+    "Williams_%R": {
+      "function": "talib.WILLR",
+      "parameters": {
+        "timeperiod": 14
+      },
+      "description": "Williams Percent Range, overbought/oversold indicator",
+      "output_columns": ["Williams_%R"]
+    },
+    "Momentum_10": {
+      "function": "talib.MOM",
+      "parameters": {
+        "timeperiod": 10
+      },
+      "description": "10-day Momentum Indicator, measuring rate of price change",
+      "output_columns": ["Momentum_10"]
+    },
+    "Volatility_30": {
+      "function": "custom_volatility",
+      "parameters": {
+        "window": 30,
+        "method": "pct_change_rolling_std"
+      },
+      "description": "30-day Price Volatility, calculated as rolling standard deviation of returns",
+      "output_columns": ["Volatility_30"]
+    },
+    "ADX_14": {
+      "function": "talib.ADX",
+      "parameters": {
+        "timeperiod": 14
+      },
+      "description": "14-day Average Directional Index, measuring trend strength",
+      "output_columns": ["ADX_14"]
+    },
+    "ROC_10": {
+      "function": "talib.ROC",
+      "parameters": {
+        "timeperiod": 10
+      },
+      "description": "10-day Rate of Change, price momentum indicator",
+      "output_columns": ["ROC_10"]
+    }
+  },
+  "data_requirements": {
+    "required_columns": ["Open", "High", "Low", "Close"],
+    "date_column": "date",
+    "data_frequency": "daily"
+  },
+  "calculation_notes": {
+    "source_library": "TA-Lib 0.4.24",
+    "custom_calculations": ["Volatility_30"],
+    "missing_data_handling": "Forward fill for price data, indicators calculated on available data only",
+    "causality_preservation": "All indicators calculated using only past and current information, no future data leakage"
+  }
+}
